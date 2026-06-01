@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>井字棋</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #ffe66d;
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
+        }
+        .back-btn {
+            color: #a8e6cf;
+            text-decoration: none;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            color: #ffe66d;
+        }
+        .info {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            color: #ffffff;
+            font-size: 20px;
+        }
+        .info-item span {
+            font-weight: bold;
+        }
+        .player-x {
+            color: #4ecdc4;
+        }
+        .player-o {
+            color: #e94560;
+        }
+        .status {
+            color: #a8e6cf;
+            font-size: 24px;
+            margin-bottom: 20px;
+            height: 30px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+        }
+        .cell {
+            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            border: 3px solid #ffe66d;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .cell:hover {
+            background: linear-gradient(145deg, #3d3d54, #2a2a3e);
+            box-shadow: 0 0 20px rgba(255, 230, 109, 0.3);
+        }
+        .cell.x {
+            color: #4ecdc4;
+            text-shadow: 0 0 20px rgba(78, 205, 196, 0.8);
+        }
+        .cell.o {
+            color: #e94560;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.8);
+        }
+        .cell.winning {
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+        .restart-btn {
+            margin-top: 30px;
+            background: #ffe66d;
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .restart-btn:hover {
+            transform: scale(1.1);
+        }
+        .score-board {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        .score-card {
+            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .score-card h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .score-card.x h3 { color: #4ecdc4; }
+        .score-card.o h3 { color: #e94560; }
+        .score-card .score {
+            font-size: 32px;
+            color: #ffffff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 返回游戏列表</a>
+    <h1>⭕ 井字棋</h1>
+    <div class="score-board">
+        <div class="score-card x">
+            <h3>你 (X)</h3>
+            <div class="score" id="scoreX">0</div>
+        </div>
+        <div class="score-card o">
+            <h3>电脑 (O)</h3>
+            <div class="score" id="scoreO">0</div>
+        </div>
+    </div>
+    <p class="status" id="status">轮到你了 - X</p>
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <button class="restart-btn" onclick="restartGame()">重新开始</button>
+
+    <script>
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let scores = { X: 0, O: 0 };
+        let isPlayerTurn = true;
+
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        const cells = document.querySelectorAll('.cell');
+
+        function checkWinner() {
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return { winner: board[a], pattern };
+                }
+            }
+            if (!board.includes('')) {
+                return { winner: 'draw', pattern: null };
+            }
+            return null;
+        }
+
+        function updateUI() {
+            cells.forEach((cell, index) => {
+                cell.textContent = board[index];
+                cell.className = 'cell';
+                if (board[index] === 'X') cell.classList.add('x');
+                if (board[index] === 'O') cell.classList.add('o');
+            });
+
+            const result = checkWinner();
+            if (result) {
+                if (result.winner === 'draw') {
+                    document.getElementById('status').textContent = '平局!';
+                } else {
+                    document.getElementById('status').textContent = `${result.winner === 'X' ? '你赢了!' : '电脑赢了!'}`;
+                    scores[result.winner]++;
+                    document.getElementById(`score${result.winner}`).textContent = scores[result.winner];
+                    result.pattern.forEach(index => cells[index].classList.add('winning'));
+                }
+                gameActive = false;
+            } else {
+                document.getElementById('status').textContent = `轮到你了 - ${currentPlayer}`;
+            }
+        }
+
+        function computerMove() {
+            if (!gameActive) return;
+
+            let available = board.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+            if (available.length === 0) return;
+
+            let move = null;
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                const line = [board[a], board[b], board[c]];
+                const oCount = line.filter(x => x === 'O').length;
+                const emptyCount = line.filter(x => x === '').length;
+                if (oCount === 2 && emptyCount === 1) {
+                    move = pattern[line.indexOf('')];
+                    break;
+                }
+            }
+
+            if (!move) {
+                for (const pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    const line = [board[a], board[b], board[c]];
+                    const xCount = line.filter(x => x === 'X').length;
+                    const emptyCount = line.filter(x => x === '').length;
+                    if (xCount === 2 && emptyCount === 1) {
+                        move = pattern[line.indexOf('')];
+                        break;
+                    }
+                }
+            }
+
+            if (!move) {
+                if (board[4] === '') move = 4;
+                else move = available[Math.floor(Math.random() * available.length)];
+            }
+
+            board[move] = 'O';
+            updateUI();
+
+            if (checkWinner()) return;
+
+            isPlayerTurn = true;
+            currentPlayer = 'X';
+            document.getElementById('status').textContent = `轮到你了 - ${currentPlayer}`;
+        }
+
+        function handleCellClick(e) {
+            if (!gameActive || !isPlayerTurn) return;
+
+            const index = parseInt(e.target.dataset.index);
+            if (board[index] !== '') return;
+
+            board[index] = 'X';
+            updateUI();
+
+            if (!checkWinner()) {
+                isPlayerTurn = false;
+                currentPlayer = 'O';
+                document.getElementById('status').textContent = `电脑思考中...`;
+                setTimeout(computerMove, 500);
+            }
+        }
+
+        function restartGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            isPlayerTurn = true;
+            document.getElementById('status').textContent = `轮到你了 - ${currentPlayer}`;
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+            });
+        }
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    </script>
+</body>
+</html>

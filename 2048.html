@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #f7931e;
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(247, 147, 30, 0.5);
+        }
+        .back-btn {
+            color: #a8e6cf;
+            text-decoration: none;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover { color: #f7931e; }
+        .game-info {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        .score-box {
+            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            padding: 10px 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .score-box label { color: #a8a8a8; font-size: 14px; }
+        .score-box .value { color: #ffffff; font-size: 28px; font-weight: bold; }
+        .game-container { position: relative; }
+        .grid-bg {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 10px;
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(247, 147, 30, 0.3);
+        }
+        .cell-bg {
+            background: #2d2d44;
+            border-radius: 8px;
+        }
+        #tiles-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100px * 4 + 10px * 3);
+            height: calc(100px * 4 + 10px * 3);
+        }
+        .tile {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffffff;
+            transition: top 0.12s ease-in-out, left 0.12s ease-in-out;
+        }
+        .tile[data-value="2"] { background: #eee4da; color: #776e65; }
+        .tile[data-value="4"] { background: #ede0c8; color: #776e65; }
+        .tile[data-value="8"] { background: #f2b179; color: #f9f6f2; }
+        .tile[data-value="16"] { background: #f59563; color: #f9f6f2; }
+        .tile[data-value="32"] { background: #f67c5f; color: #f9f6f2; }
+        .tile[data-value="64"] { background: #f65e3b; color: #f9f6f2; }
+        .tile[data-value="128"] { background: #edcf72; color: #f9f6f2; font-size: 28px; }
+        .tile[data-value="256"] { background: #edcc61; color: #f9f6f2; font-size: 28px; }
+        .tile[data-value="512"] { background: #edc850; color: #f9f6f2; font-size: 28px; }
+        .tile[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: 24px; }
+        .tile[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: 24px; }
+        .tile[data-value="4096"] { background: #3c3a32; color: #f9f6f2; font-size: 24px; }
+        .tile[data-value="8192"] { background: #3c3a32; color: #f9f6f2; font-size: 24px; }
+        .tile.new { animation: pop 0.2s ease-in-out; }
+        .tile.merged { animation: merge 0.15s ease-in-out; }
+        @keyframes pop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes merge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .instructions {
+            color: #a8a8a8;
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .instructions kbd {
+            background: #2d2d44;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #ffffff;
+        }
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 100;
+        }
+        .game-over h2 { color: #f7931e; font-size: 36px; margin-bottom: 20px; }
+        .restart-btn {
+            background: #f7931e;
+            color: #ffffff;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .restart-btn:hover { transform: scale(1.1); }
+        .new-game-btn {
+            background: #f7931e;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .new-game-btn:hover { background: #e8850a; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 返回游戏列表</a>
+    <h1>🎮 2048</h1>
+    <button class="new-game-btn" onclick="initGame()">新游戏</button>
+    <div class="game-info">
+        <div class="score-box"><label>分数</label><div class="value" id="score">0</div></div>
+        <div class="score-box"><label>最高</label><div class="value" id="highScore">0</div></div>
+    </div>
+    <div class="game-container">
+        <div class="grid-bg">
+            <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
+            <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
+            <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
+            <div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div><div class="cell-bg"></div>
+        </div>
+        <div id="tiles-container"></div>
+        <div class="game-over" id="gameOver">
+            <h2 id="gameOverText">游戏结束!</h2>
+            <p style="color: #ffffff; margin-bottom: 20px;">得分: <span id="finalScore">0</span></p>
+            <button class="restart-btn" onclick="initGame()">再来一局</button>
+        </div>
+    </div>
+    <p class="instructions">使用 <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 或 <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移动方块 | 相同数字相加得到2048</p>
+
+    <script>
+        const gridSize = 4;
+        const tileSize = 100;
+        const gap = 10;
+        let grid = [];
+        let score = 0;
+        let highScore = localStorage.getItem('game2048HighScore') || 0;
+        let isAnimating = false;
+        let tileId = 0;
+
+        document.getElementById('highScore').textContent = highScore;
+
+        function initGame() {
+            grid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('tiles-container').innerHTML = '';
+            addRandomTile();
+            addRandomTile();
+            render();
+        }
+
+        function addRandomTile() {
+            const emptyCells = [];
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (!grid[r][c]) {
+                        emptyCells.push({ r, c });
+                    }
+                }
+            }
+            if (emptyCells.length > 0) {
+                const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                const value = Math.random() < 0.9 ? 2 : 4;
+                grid[r][c] = { value, id: tileId++, isNew: true, isMerged: false };
+            }
+        }
+
+        function getPosition(row, col) {
+            return {
+                top: row * (tileSize + gap),
+                left: col * (tileSize + gap)
+            };
+        }
+
+        function createTileElement(tile, row, col) {
+            const div = document.createElement('div');
+            div.className = 'tile';
+            div.id = 'tile-' + tile.id;
+            div.textContent = tile.value;
+            div.dataset.value = tile.value;
+            const pos = getPosition(row, col);
+            div.style.top = pos.top + 'px';
+            div.style.left = pos.left + 'px';
+            if (tile.isNew) div.classList.add('new');
+            if (tile.isMerged) div.classList.add('merged');
+            return div;
+        }
+
+        function render(newTiles = [], mergedTiles = []) {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (grid[r][c]) {
+                        const tile = grid[r][c];
+                        const div = createTileElement(tile, r, c);
+                        container.appendChild(div);
+                    }
+                }
+            }
+        }
+
+        function slide(row) {
+            let arr = row.filter(cell => cell !== null);
+            for (let i = 0; i < arr.length - 1; i++) {
+                if (arr[i] && arr[i + 1] && arr[i].value === arr[i + 1].value) {
+                    const newValue = arr[i].value * 2;
+                    arr[i] = { value: newValue, id: tileId++, isNew: false, isMerged: true };
+                    score += newValue;
+                    arr.splice(i + 1, 1);
+                }
+            }
+            while (arr.length < gridSize) {
+                arr.push(null);
+            }
+            return arr;
+        }
+
+        function move(direction) {
+            if (isAnimating) return;
+
+            const originalGrid = JSON.stringify(grid.map(row => row.map(cell => cell ? cell.value : 0)));
+
+            if (direction === 0) {
+                for (let c = 0; c < gridSize; c++) {
+                    let col = [];
+                    for (let r = 0; r < gridSize; r++) col.push(grid[r][c]);
+                    col = slide(col);
+                    for (let r = 0; r < gridSize; r++) grid[r][c] = col[r];
+                }
+            } else if (direction === 1) {
+                for (let r = 0; r < gridSize; r++) {
+                    grid[r] = slide(grid[r].slice().reverse()).reverse();
+                }
+            } else if (direction === 2) {
+                for (let c = 0; c < gridSize; c++) {
+                    let col = [];
+                    for (let r = gridSize - 1; r >= 0; r--) col.push(grid[r][c]);
+                    col = slide(col);
+                    for (let r = 0; r < gridSize; r++) grid[r][c] = col[gridSize - 1 - r];
+                }
+            } else if (direction === 3) {
+                for (let r = 0; r < gridSize; r++) {
+                    grid[r] = slide(grid[r]);
+                }
+            }
+
+            const newGrid = JSON.stringify(grid.map(row => row.map(cell => cell ? cell.value : 0)));
+
+            if (newGrid !== originalGrid) {
+                isAnimating = true;
+                render();
+                setTimeout(() => {
+                    addRandomTile();
+                    render();
+                    isAnimating = false;
+
+                    document.getElementById('score').textContent = score;
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('game2048HighScore', highScore);
+                        document.getElementById('highScore').textContent = highScore;
+                    }
+
+                    if (isGameOver()) {
+                        document.getElementById('gameOverText').textContent = checkWin() ? '你赢了!' : '游戏结束!';
+                        document.getElementById('finalScore').textContent = score;
+                        document.getElementById('gameOver').style.display = 'block';
+                    }
+                }, 120);
+            }
+        }
+
+        function isGameOver() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (!grid[r][c]) return false;
+                    if (c < gridSize - 1 && grid[r][c].value === grid[r][c + 1].value) return false;
+                    if (r < gridSize - 1 && grid[r][c].value === grid[r + 1][c].value) return false;
+                }
+            }
+            return true;
+        }
+
+        function checkWin() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (grid[r][c] && grid[r][c].value === 2048) return true;
+                }
+            }
+            return false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    move(0);
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    move(1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    move(2);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    move(3);
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        initGame();
+    </script>
+</body>
+</html>

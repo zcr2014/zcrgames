@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经典小游戏合集</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        h1 {
+            color: #e94560;
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+        }
+        .subtitle {
+            color: #a8e6cf;
+            font-size: 20px;
+            margin-bottom: 40px;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        .game-card {
+            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+        }
+        .game-card.snake:hover { box-shadow: 0 0 50px rgba(78, 205, 196, 0.5); }
+        .game-card.tetris:hover { box-shadow: 0 0 50px rgba(233, 69, 96, 0.5); }
+        .game-card.tictactoe:hover { box-shadow: 0 0 50px rgba(255, 230, 109, 0.5); }
+        .game-card.game2048:hover { box-shadow: 0 0 50px rgba(247, 147, 30, 0.5); }
+        .game-card.tank:hover { box-shadow: 0 0 50px rgba(78, 205, 196, 0.5); }
+        .game-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .game-title {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .game-desc {
+            color: #a8a8a8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 经典小游戏</h1>
+    <p class="subtitle">5款超好玩的网页小游戏</p>
+    <div class="games-grid">
+        <a href="snake.html" class="game-card snake">
+            <div class="game-icon">🐍</div>
+            <div class="game-title">贪吃蛇</div>
+            <div class="game-desc">经典怀旧，控制蛇吃食物</div>
+        </a>
+        <a href="tetris.html" class="game-card tetris">
+            <div class="game-icon">🧱</div>
+            <div class="game-title">俄罗斯方块</div>
+            <div class="game-desc">消除方块，得高分</div>
+        </a>
+        <a href="tictactoe.html" class="game-card tictactoe">
+            <div class="game-icon">⭕</div>
+            <div class="game-title">井字棋</div>
+            <div class="game-desc">与电脑对战，三连获胜</div>
+        </a>
+        <a href="2048.html" class="game-card game2048">
+            <div class="game-icon">🔢</div>
+            <div class="game-title">2048</div>
+            <div class="game-desc">滑动合并，挑战2048</div>
+        </a>
+        <a href="tank.html" class="game-card tank">
+            <div class="game-icon">🎯</div>
+            <div class="game-title">坦克大战</div>
+            <div class="game-desc">消灭敌人，守护阵地</div>
+        </a>
+    </div>
+</body>
+</html>
