@@ -141,7 +141,7 @@
             transition: transform 0.2s;
         }
         .restart-btn:hover { transform: scale(1.1); }
-        .new-game-btn {
+        .new-game-btn, .undo-btn {
             background: #f7931e;
             color: #ffffff;
             border: none;
@@ -150,14 +150,20 @@
             border-radius: 10px;
             cursor: pointer;
             margin-bottom: 20px;
+            margin-right: 10px;
         }
-        .new-game-btn:hover { background: #e8850a; }
+        .new-game-btn:hover, .undo-btn:hover { background: #e8850a; }
+        .undo-btn:disabled {
+            background: #4a4a5a;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <a href="index.html" class="back-btn">← 返回游戏列表</a>
     <h1>🎮 2048</h1>
     <button class="new-game-btn" onclick="initGame()">新游戏</button>
+    <button class="undo-btn" onclick="undo()" id="undoBtn" disabled>撤销 ↩</button>
     <div class="game-info">
         <div class="score-box"><label>分数</label><div class="value" id="score">0</div></div>
         <div class="score-box"><label>最高</label><div class="value" id="highScore">0</div></div>
@@ -187,12 +193,16 @@
         let highScore = localStorage.getItem('game2048HighScore') || 0;
         let isAnimating = false;
         let tileId = 0;
+        let history = [];
+        const maxHistory = 20;
 
         document.getElementById('highScore').textContent = highScore;
 
         function initGame() {
             grid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
             score = 0;
+            history = [];
+            updateUndoButton();
             document.getElementById('score').textContent = score;
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('tiles-container').innerHTML = '';
@@ -268,6 +278,38 @@
             return arr;
         }
 
+        function saveState() {
+            const state = {
+                grid: JSON.parse(JSON.stringify(grid)),
+                score: score,
+                tileId: tileId
+            };
+            history.push(state);
+            if (history.length > maxHistory) {
+                history.shift();
+            }
+            updateUndoButton();
+        }
+
+        function undo() {
+            if (history.length === 0 || isAnimating) return;
+
+            const prevState = history.pop();
+            grid = prevState.grid;
+            score = prevState.score;
+            tileId = prevState.tileId;
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('gameOver').style.display = 'none';
+            render();
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            const btn = document.getElementById('undoBtn');
+            btn.disabled = history.length === 0;
+        }
+
         function move(direction) {
             if (isAnimating) return;
 
@@ -300,6 +342,7 @@
             const newGrid = JSON.stringify(grid.map(row => row.map(cell => cell ? cell.value : 0)));
 
             if (newGrid !== originalGrid) {
+                saveState();
                 isAnimating = true;
                 render();
                 setTimeout(() => {
@@ -344,6 +387,12 @@
         }
 
         document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                undo();
+                e.preventDefault();
+                return;
+            }
+            
             switch (e.key) {
                 case 'ArrowUp':
                 case 'w':
